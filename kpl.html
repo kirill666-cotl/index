@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Игра: Лопай кляксы!</title>
+<style>
+    body {
+        font-family: 'Comic Sans MS', cursive;
+        background: radial-gradient(circle at top, #ffecd2, #fcb69f);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    #score {
+        font-size: 26px;
+        margin-bottom: 15px;
+        color: #fff;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+
+    #gameArea {
+        width: 600px;
+        height: 400px;
+        background-color: rgba(255, 255, 255, 0.8);
+        border: 3px solid #fff;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .blob {
+        width: 60px;
+        height: 60px;
+        position: absolute;
+        background-color: #ff6b6b;
+        border-radius: 50% 60% 55% 70%;
+        opacity: 0.9;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+        animation: appear 0.3s ease-out;
+    }
+
+    @keyframes appear {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    #startBtn {
+        padding: 10px 25px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #27ae60;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        margin-top: 15px;
+        transition: 0.3s;
+    }
+
+    #startBtn:hover {
+        background-color: #2ecc71;
+    }
+
+    #gameOver {
+        font-size: 28px;
+        color: #c0392b;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px #fff;
+        margin-top: 10px;
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<div id="score">Очки: 0</div>
+<div id="gameArea"></div>
+<button id="startBtn">Начать игру</button>
+<div id="gameOver"></div>
+
+<script>
+    const colors = ["#ff6b6b", "#feca57", "#48dbfb", "#1dd1a1", "#9b59b6", "#ff9ff3", "#ffb142"];
+    const gameArea = document.getElementById('gameArea');
+    const scoreDisplay = document.getElementById('score');
+    const startBtn = document.getElementById('startBtn');
+    const gameOverText = document.getElementById('gameOver');
+
+    let score = 0;
+    let blobInterval;
+    let gameActive = false;
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function createBlob() {
+        if (!gameActive) return;
+
+        // Если слишком много клякс — поражение
+        if (gameArea.childElementCount > 25) {
+            endGame(false);
+            return;
+        }
+
+        const blob = document.createElement('div');
+        blob.classList.add('blob');
+        blob.style.backgroundColor = colors[getRandomInt(0, colors.length - 1)];
+        blob.style.width = `${getRandomInt(40, 80)}px`;
+        blob.style.height = `${getRandomInt(40, 80)}px`;
+
+        blob.style.left = `${getRandomInt(0, gameArea.clientWidth - 80)}px`;
+        blob.style.top = `${getRandomInt(0, gameArea.clientHeight - 80)}px`;
+
+        blob.style.borderRadius = `${getRandomInt(40, 70)}% ${getRandomInt(40, 70)}% ${getRandomInt(40, 70)}% ${getRandomInt(40, 70)}%`;
+
+        // Реакция на наведение
+        blob.addEventListener('mouseenter', () => {
+            score++;
+            scoreDisplay.textContent = `Очки: ${score}`;
+            blob.style.transform = 'scale(0)';
+            blob.style.opacity = '0';
+            setTimeout(() => blob.remove(), 150);
+        });
+
+        gameArea.appendChild(blob);
+    }
+
+    function startGame() {
+        score = 0;
+        scoreDisplay.textContent = `Очки: ${score}`;
+        gameArea.innerHTML = '';
+        gameOverText.style.display = 'none';
+        startBtn.disabled = true;
+        gameActive = true;
+
+        // Создаем кляксы каждые 700 мс
+        blobInterval = setInterval(createBlob, 700);
+
+        // Игра длится 30 секунд
+        setTimeout(() => {
+            if (gameActive) endGame(true);
+        }, 30000);
+    }
+
+    function endGame(win) {
+        clearInterval(blobInterval);
+        gameActive = false;
+        startBtn.disabled = false;
+        gameOverText.style.display = 'block';
+
+        if (win) {
+            gameOverText.style.color = '#27ae60';
+            gameOverText.textContent = `🎉 Победа! Ты успел лопнуть ${score} клякс!`;
+            // Эффект "взрыва" всех клякс
+            const blobs = document.querySelectorAll('.blob');
+            blobs.forEach(blob => {
+                blob.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+                blob.style.transform = `scale(${getRandomInt(2,4)})`;
+                blob.style.opacity = '0';
+                setTimeout(() => blob.remove(), 400);
+            });
+        } else {
+            gameOverText.style.color = '#e74c3c';
+            gameOverText.textContent = `💥 Проигрыш! Экран заполнился кляксами... Очки: ${score}`;
+        }
+    }
+
+    startBtn.addEventListener('click', startGame);
+</script>
+
+</body>
+</html>
+
